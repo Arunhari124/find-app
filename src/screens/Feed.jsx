@@ -2,24 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, MessageSquare, Heart, CheckCircle, Navigation, ArrowLeft, Send, X, Flag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from "../lib/supabase";
 
-const mockItems = [
-  {
-    id: 1, type: 'Lost', category: 'Bag/Laptop', name: 'Black Nike Backpack', userName: 'John Doe',
-    verified: true, desc: 'Lost near the engineering block around 2 PM. Contains a Macbook Air.',
-    status: 'Lost', phone: '9876543210', matchAlert: true, comments: []
-  },
-  {
-    id: 2, type: 'Found', category: 'Phone/Electronics', name: 'iPhone 13 Pro', userName: 'Jane Smith',
-    verified: false, desc: 'Found a blue iPhone 13 Pro in the library seating area.',
-    status: 'Found', phone: '1234567890', matchAlert: false, comments: [{ id: 101, user: 'Jake', text: 'I think I saw someone holding this near the cafeteria!' }]
-  },
-  {
-    id: 3, type: 'Lost', category: 'Keys', name: 'Car Keys (Ford)', userName: 'Mike',
-    verified: true, desc: 'Dropped my keys near the parking lot.',
-    status: 'Lost', phone: '1122334455', matchAlert: false, comments: []
-  }
-];
+
 
 export default function Feed() {
   const navigate = useNavigate();
@@ -29,15 +14,22 @@ export default function Feed() {
   const [showCommentsFor, setShowCommentsFor] = useState(null);
   const [reportedUsers, setReportedUsers] = useState({});
 
-  useEffect(() => {
-    const savedItems = JSON.parse(localStorage.getItem('find_items') || 'null');
-    if (savedItems && savedItems.length > 0) {
-      setItems(savedItems);
-    } else {
-      setItems(mockItems);
-      localStorage.setItem('find_items', JSON.stringify(mockItems));
-    }
-  }, []);
+ useEffect(() => {
+  fetchItems();
+}, []);
+
+async function fetchItems() {
+  const { data, error } = await supabase
+    .from("items")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+  } else {
+    setItems(data);
+  }
+}
 
   const toggleLike = (id) => {
     setLikedItems(prev => ({ ...prev, [id]: !prev[id] }));
